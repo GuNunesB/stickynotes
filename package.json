@@ -19,5 +19,9 @@
   "homepage": "https://github.com/GuNunesB/sticknotes#readme",
   "devDependencies": {
     "electron": "^34.3.0"
+  },
+  "dependencies": {
+    "mongodb": "^6.15.0",
+    "mongoose": "^8.12.1"
   }
 }
