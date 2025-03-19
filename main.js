@@ -6,10 +6,13 @@ console.log("Electron - Processo principal")
 // nativeTheme (definir tema claro ou escuro)
 // Menu (definir um menu personalizado)
 // shell (acessar links externos no navegador padrão)
-const { app, BrowserWindow, nativeTheme, Menu, shell } = require('electron/main')
+const { app, BrowserWindow, nativeTheme, Menu, shell, ipcMain } = require('electron/main')
 
 // preload.js
 const path = require('node:path')
+
+// Módulo de conexão importação 
+const { conectar, desconectar } = require('./database.js')
 
 // Janela principal
 let win
@@ -65,6 +68,18 @@ function aboutWindow() {
 app.whenReady().then(() => {
   createWindow()
 
+  //local para estabelecer conexão com o bd
+  // o ipcMain.on receberá a mensagem
+  // db-connect = rótulo da mensagem
+  ipcMain.on('db-connect', async (event) => {
+    await conectar()
+
+    // enviar img para trocar icone de status de conexão do banco de dados
+    setTimeout(() => {
+      event.reply('db-status', "conectado")
+    }, 500) // (delay de 0.5s para sincronizar com a nuvem)
+  })
+
   // só ativar a janela principal se nenhuma outra estiver ativa
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -78,6 +93,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Encerrar a conexão do bd quando a aplicação for finalizada
+app.on('before-quit', async () => {
+  await desconectar()
 })
 
 // Reduzir a verbosidade de logs não críticos (devtools)
