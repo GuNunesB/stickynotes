@@ -49,8 +49,8 @@ function aboutWindow() {
   // validação (se existir a janela principal)
   if (mainWindow) {
     about = new BrowserWindow({
-      width: 400,
-      height: 270,
+      width: 320,
+      height: 210,
       autoHideMenuBar: true,
       resizable: false,
       minimizable: false,
@@ -83,8 +83,8 @@ function noteWindow() {
   // validação (se existir a janela principal)
   if (mainWindow) {
     note = new BrowserWindow({
-      width: 300,
-      height: 200,
+      width: 400,
+      height: 270,
       autoHideMenuBar: true,
       resizable: false,
       minimizable: false,
