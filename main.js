@@ -49,19 +49,57 @@ function aboutWindow() {
   // validação (se existir a janela principal)
   if (mainWindow) {
     about = new BrowserWindow({
-      width: 320,
-      height: 280,
+      width: 400,
+      height: 270,
       autoHideMenuBar: true,
       resizable: false,
       minimizable: false,
       // estabelecer uma relação hierárquica entre janelas
       parent: mainWindow,
       // criar uma janela modal (só retorna a principal quando encerrada)
-      modal: true
+      modal: true,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js')// link para receber a msg
+      }
     })
   }
 
+
   about.loadFile('./src/views/sobre.html')
+
+  ipcMain.on('about-exit', () => {
+    if (about && !about.isDestroyed()) {
+      about.close()
+    }
+   
+  })
+}
+
+let note
+function noteWindow() {
+  nativeTheme.themeSource = 'light'
+  // obter a janela principal
+  const mainWindow = BrowserWindow.getFocusedWindow()
+  // validação (se existir a janela principal)
+  if (mainWindow) {
+    note = new BrowserWindow({
+      width: 300,
+      height: 200,
+      autoHideMenuBar: true,
+      resizable: false,
+      minimizable: false,
+      // estabelecer uma relação hierárquica entre janelas
+      parent: mainWindow,
+      // criar uma janela modal (só retorna a principal quando encerrada)
+      modal: true,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js')// link para receber a msg
+      }
+    })
+  }
+
+
+  note.loadFile('./src/views/nota.html')
 }
 
 // inicialização da aplicação (assíncronismo)
@@ -72,12 +110,13 @@ app.whenReady().then(() => {
   // o ipcMain.on receberá a mensagem
   // db-connect = rótulo da mensagem
   ipcMain.on('db-connect', async (event) => {
-    await conectar()
-
-    // enviar img para trocar icone de status de conexão do banco de dados
-    setTimeout(() => {
-      event.reply('db-status', "conectado")
-    }, 500) // (delay de 0.5s para sincronizar com a nuvem)
+    const conectado = await conectar()
+    if (conectado) {
+      // enviar img para trocar icone de status de conexão do banco de dados
+      setTimeout(() => {
+        event.reply('db-status', "conectado")
+      }, 500) // (delay de 0.5s para sincronizar com a nuvem)
+    }
   })
 
   // só ativar a janela principal se nenhuma outra estiver ativa
@@ -110,7 +149,8 @@ const template = [
     submenu: [
       {
         label: 'Criar nota',
-        accelerator: 'Ctrl+N'
+        accelerator: 'Ctrl+N',
+        click: () => noteWindow()
       },
       {
         type: 'separator'
