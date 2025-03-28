@@ -14,6 +14,9 @@ const path = require('node:path')
 // Módulo de conexão importação 
 const { conectar, desconectar } = require('./database.js')
 
+// Importação do modelo de dados do "notes.js"
+const noteModel = require('./src/models/Notes.js')
+
 // Janela principal
 let win
 const createWindow = () => {
@@ -28,7 +31,7 @@ const createWindow = () => {
     //closable: false,
     //autoHideMenuBar: true
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, './preload.js')
     }
   })
 
@@ -59,7 +62,7 @@ function aboutWindow() {
       // criar uma janela modal (só retorna a principal quando encerrada)
       modal: true,
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js')// link para receber a msg
+        preload: path.join(__dirname, './preload.js')// link para receber a msg
       }
     })
   }
@@ -86,8 +89,8 @@ function noteWindow() {
       width: 400,
       height: 270,
       autoHideMenuBar: true,
-      resizable: false,
-      minimizable: false,
+      //resizable: false,
+      //minimizable: false,
       // estabelecer uma relação hierárquica entre janelas
       parent: mainWindow,
       // criar uma janela modal (só retorna a principal quando encerrada)
@@ -204,3 +207,18 @@ const template = [
     ]
   }
 ]
+
+//= CRUD CREATE ===============================================//
+
+//Recebe o objeto com os dados
+ipcMain.on('create-note', async (event, stickynote) => {
+  console.log(stickynote)
+
+  const newNote = noteModel({
+    texto: stickynote.textNote,
+    cor: stickynote.colorNote
+  })
+
+  // Salvar no MongoDB
+  newNote.save()
+})
