@@ -29,3 +29,4 @@ api.dbStatus((event, message) => {
         document.getElementById('icondb').src = "../public/img/dboff.png"
     }
 })
+

@@ -32,3 +32,11 @@ formNote.addEventListener('submit', async (event) => {
     api.createNote(stickynote)
 
 })
+
+//= RESET FORM ================================================//
+
+api.resetForm((args) => {
+    location.reload()
+})
+
+//= FIM RESET FORM ============================================//

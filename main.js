@@ -221,4 +221,9 @@ ipcMain.on('create-note', async (event, stickynote) => {
 
   // Salvar no MongoDB
   newNote.save()
+
+  // Enviar ao Renderizador um pedido para limpar os campos assim que salvar uma nota
+  event.reply('reset-form')
 })
+
+//= FIM CRUD CREATE ===========================================//
