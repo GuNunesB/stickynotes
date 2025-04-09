@@ -89,8 +89,8 @@ function noteWindow() {
       width: 400,
       height: 270,
       autoHideMenuBar: true,
-      //resizable: false,
-      //minimizable: false,
+      resizable: false,
+      minimizable: false,
       // estabelecer uma relação hierárquica entre janelas
       parent: mainWindow,
       // criar uma janela modal (só retorna a principal quando encerrada)
@@ -213,17 +213,36 @@ const template = [
 //Recebe o objeto com os dados
 ipcMain.on('create-note', async (event, stickynote) => {
   console.log(stickynote)
+  try {
+    const newNote = noteModel({
+      texto: stickynote.textNote,
+      cor: stickynote.colorNote
+    })
+  
+    // Salvar no MongoDB
+    newNote.save()
+  
+    // Enviar ao Renderizador um pedido para limpar os campos assim que salvar uma nota
+    event.reply('reset-form')
 
-  const newNote = noteModel({
-    texto: stickynote.textNote,
-    cor: stickynote.colorNote
-  })
+  } catch(error) {
+    console.log(error)
 
-  // Salvar no MongoDB
-  newNote.save()
-
-  // Enviar ao Renderizador um pedido para limpar os campos assim que salvar uma nota
-  event.reply('reset-form')
+  }  
 })
 
 //= FIM CRUD CREATE ===========================================//
+
+//= CRUD READ ===========================================//
+
+ipcMain.on('list-notes', async (event) => {
+  try {
+    const notes = await noteModel.find()
+    event.reply('render-notes', JSON.stringify(notes))
+
+  } catch (error) {
+    console.log(error)
+  }
+})
+
+//= FIM CRUD READ ===========================================//

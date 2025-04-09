@@ -15,5 +15,7 @@ contextBridge.exposeInMainWorld('api', {
     dbStatus: (message) => ipcRenderer.on('db-status', message),
     aboutExit: () => ipcRenderer.send('about-exit'),
     createNote: (stickynote) => ipcRenderer.send('create-note', stickynote),
-    resetForm: (args) => ipcRenderer.on('reset-form', args) //Para mandar um argumento vazio usar o "args"
+    resetForm: (args) => ipcRenderer.on('reset-form', args), //Para mandar um argumento vazio usar o "args"
+    listNotes: () => ipcRenderer.send('list-notes'),
+    renderNotes: (notes) => ipcRenderer.on('render-notes', notes)
 })

@@ -4,6 +4,10 @@
 
 console.log("Processo de renderização")
 
+let arrayNotes = []
+
+const list = document.getElementById('listNotes')
+
 // inserção da data no rodapé
 function obterData() {
     const data = new Date()
@@ -30,3 +34,24 @@ api.dbStatus((event, message) => {
     }
 })
 
+//--------------------------
+
+api.listNotes()
+
+api.renderNotes((event, notes) => {
+    const renderNotes = JSON.parse(notes) // Conversão de String para JSON
+    console.log(renderNotes)
+
+    arrayNotes = renderNotes
+
+    arrayNotes.forEach((n) => {
+        list.innerHTML += `
+            <br>
+            <li>
+                <p>${n._id}</p>
+                <p>${n.texto}</p>
+                <p>${n.cor}</p>
+            </li>
+        `
+    });
+})

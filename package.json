@@ -18,10 +18,10 @@
   },
   "homepage": "https://github.com/GuNunesB/sticknotes#readme",
   "devDependencies": {
-    "electron": "^34.3.4"
+    "electron": "^34.4.1"
   },
   "dependencies": {
     "mongodb": "^6.15.0",
-    "mongoose": "^8.12.1"
+    "mongoose": "^8.13.1"
   }
 }
