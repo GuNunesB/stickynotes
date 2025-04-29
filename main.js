@@ -6,21 +6,23 @@ console.log("Electron - Processo principal")
 // nativeTheme (definir tema claro ou escuro)
 // Menu (definir um menu personalizado)
 // shell (acessar links externos no navegador padrão)
-const { app, BrowserWindow, nativeTheme, Menu, shell, ipcMain } = require('electron/main')
+// ipcMain (permite estabelecer uma comunicação entre processos (IPC) main.js <=> renderer.js)
+// dialog (caixas de mensagem)
+const { app, BrowserWindow, nativeTheme, Menu, shell, ipcMain, dialog } = require('electron/main')
 
-// preload.js
+// Ativação do preload.js (importação do path)
 const path = require('node:path')
 
-// Módulo de conexão importação 
+// Importação dos métodos conectar e desconectar (módulo de conexão)
 const { conectar, desconectar } = require('./database.js')
 
-// Importação do modelo de dados do "notes.js"
+// Importação do modelo de dados (Notes.js)
 const noteModel = require('./src/models/Notes.js')
 
 // Janela principal
 let win
 const createWindow = () => {
-  // definindo o tema da janela claro ou ecuro
+  // definindo o tema da janela claro ou escuro
   nativeTheme.themeSource = 'light'
   win = new BrowserWindow({
     width: 1010,
@@ -29,9 +31,9 @@ const createWindow = () => {
     //resizable: false,
     //minimizable: false,
     //closable: false,
-    //autoHideMenuBar: true
+    //autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, './preload.js')
+      preload: path.join(__dirname, 'preload.js')
     }
   })
 
@@ -52,8 +54,8 @@ function aboutWindow() {
   // validação (se existir a janela principal)
   if (mainWindow) {
     about = new BrowserWindow({
-      width: 320,
-      height: 210,
+      width: 300,
+      height: 200,
       autoHideMenuBar: true,
       resizable: false,
       minimizable: false,
@@ -62,22 +64,23 @@ function aboutWindow() {
       // criar uma janela modal (só retorna a principal quando encerrada)
       modal: true,
       webPreferences: {
-        preload: path.join(__dirname, './preload.js')// link para receber a msg
+        preload: path.join(__dirname, 'preload.js')
       }
     })
   }
 
-
   about.loadFile('./src/views/sobre.html')
 
+  //recebimento da mensagem do renderizador da tela sobre para fechar a janela usando o botão OK
   ipcMain.on('about-exit', () => {
+    //validação (se existir a janela e ela não estiver sido destruída, fechar)
     if (about && !about.isDestroyed()) {
       about.close()
     }
-   
   })
 }
 
+// janela nota
 let note
 function noteWindow() {
   nativeTheme.themeSource = 'light'
@@ -96,11 +99,10 @@ function noteWindow() {
       // criar uma janela modal (só retorna a principal quando encerrada)
       modal: true,
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js')// link para receber a msg
+        preload: path.join(__dirname, 'preload.js')
       }
     })
   }
-
 
   note.loadFile('./src/views/nota.html')
 }
@@ -109,16 +111,20 @@ function noteWindow() {
 app.whenReady().then(() => {
   createWindow()
 
-  //local para estabelecer conexão com o bd
-  // o ipcMain.on receberá a mensagem
-  // db-connect = rótulo da mensagem
+  // Melhor local para estabelecer a conexão com o banco de dados
+  // No MongoDB é mais eficiente manter uma única conexão aberta durante todo o tempo de vida do aplicativo e encerrar a conexão quando o aplicativo for finalizado
+  // ipcMain.on (receber mensagem)
+  // db-connect (rótulo da mensagem)
   ipcMain.on('db-connect', async (event) => {
+    //a linha abaixo estabelece a conexão com o banco de dados e verifica se foi conectado com sucesso (return true)
     const conectado = await conectar()
     if (conectado) {
-      // enviar img para trocar icone de status de conexão do banco de dados
+      // enviar ao renderizador uma mensagem para trocar a imagem do ícone do status do banco de dados (criar um delay de 0.2 ou 0.5s para sincronização com a nuvem)
       setTimeout(() => {
+        // enviar ao renderizador a mensagem "conectado"
+        // db-status (IPC - comunicação entre processos - preload.js)
         event.reply('db-status', "conectado")
-      }, 500) // (delay de 0.5s para sincronizar com a nuvem)
+      }, 200) //200ms = 0.2s
     }
   })
 
@@ -137,7 +143,7 @@ app.on('window-all-closed', () => {
   }
 })
 
-// Encerrar a conexão do bd quando a aplicação for finalizada
+// IMPORTANTE! Desconectar do banco de dados quando a aplicação for finalizada
 app.on('before-quit', async () => {
   await desconectar()
 })
@@ -185,7 +191,8 @@ const template = [
       },
       {
         label: 'Recarregar',
-        role: 'reload'
+        accelerator: 'Ctrl+R',
+        click: () => updateList()
       },
       {
         label: 'DevTools',
@@ -198,7 +205,7 @@ const template = [
     submenu: [
       {
         label: 'Repositório',
-        click: () => shell.openExternal('https://github.com/GuNunesB/stickynotes')
+        click: () => shell.openExternal('https://github.com/professorjosedeassis/stickynotes')
       },
       {
         label: 'Sobre',
@@ -208,41 +215,103 @@ const template = [
   }
 ]
 
-//= CRUD CREATE ===============================================//
+// =================================================
+// == CRUD Create ==================================
 
-//Recebe o objeto com os dados
-ipcMain.on('create-note', async (event, stickynote) => {
-  console.log(stickynote)
+// Recebimento do objeto que contem os dados da nota
+ipcMain.on('create-note', async (event, stickyNote) => {
+  //IMPORTANTE! Teste de recebimento do objeto - Passo 2
+  console.log(stickyNote)
+  //uso do try-catch para tratamento de excessões
   try {
+    //Criar uma nova estrutura de dados para salvar no banco
+    //Atenção! Os atributos da estrutura precisam ser idênticos ao modelo e os valores são obtidos através do objeto stickNote
     const newNote = noteModel({
-      texto: stickynote.textNote,
-      cor: stickynote.colorNote
+      texto: stickyNote.textNote,
+      cor: stickyNote.colorNote
     })
-  
-    // Salvar no MongoDB
+    // Salvar a nota no banco de dados (Passo 3: fluxo)
     newNote.save()
-  
-    // Enviar ao Renderizador um pedido para limpar os campos assim que salvar uma nota
+    // Enviar ao renderizador um pedido para limpar os campos e setar o formulário com os padrões originais (foco no texto), usando o preload.js
     event.reply('reset-form')
-
-  } catch(error) {
-    console.log(error)
-
-  }  
-})
-
-//= FIM CRUD CREATE ===========================================//
-
-//= CRUD READ ===========================================//
-
-ipcMain.on('list-notes', async (event) => {
-  try {
-    const notes = await noteModel.find()
-    event.reply('render-notes', JSON.stringify(notes))
-
   } catch (error) {
     console.log(error)
   }
 })
 
-//= FIM CRUD READ ===========================================//
+// == Fim - CRUD Create ============================
+// =================================================
+
+
+// =================================================
+// == CRUD Read ====================================
+
+// Passo 2: Receber do renderer o pedido para listar as notas e fazer a busca no banco de dados
+ipcMain.on('list-notes', async (event) => {
+  //console.log("teste IPC [list-notes]")
+  try {
+    // Passo 3: obter do banco a listagem de notas cadastradas
+    const notes = await noteModel.find()
+    console.log(notes) // teste do passo 3
+    // Passo 4: enviar ao renderer a listagem das notas
+    // obs: IPC (string) | banco (JSON) (é necessário uma conversão usando JSON.stringify())
+    // event.reply() resposta a solicitação (específica do solicitante)
+    event.reply('render-notes', JSON.stringify(notes))
+  } catch (error) {
+    console.log(error)
+  }
+})
+
+// == Fim - CRUD Read ==============================
+// =================================================
+
+
+// =================================================
+// == Atualização da lista de notas ================
+
+// atualização das notas na janela principal
+ipcMain.on('update-list', () => {
+  updateList()
+})
+
+function updateList() {
+  // validação (se a janela principal existir e não tiver sido encerrada)
+  if (win && !win.isDestroyed()) {
+    // enviar ao renderer.js um pedido para recarregar a página
+    win.webContents.send('main-reload')
+    // enviar novamente um pedido para troca do ícone de status do banco
+    setTimeout(() => {
+      win.webContents.send('db-status', "conectado")
+    }, 200) // tempo para garantir que o renderer esteja pronto
+  }
+}
+
+// == Fim - Atualização da lista de notas ==========
+// =================================================
+
+
+// =================================================
+// == CRUD Delete ==================================
+
+ipcMain.on('delete-note', async (event, id) => {
+  console.log(id) //teste do Passo 2 (importante!)
+  // excluir o registro do banco (passo 3) IMPORTANTE! (confirmar antes da exclusão)
+  // win (janela principal)
+  const result = await dialog.showMessageBox(win, {
+    type: 'warning',
+    title: "Atenção!",
+    message: "Tem certeza que deseja excluir esta nota?\nEsta ação não poderá ser desfeita.",
+    buttons: ['Cancelar', 'Excluir'] // [0, 1]
+  })
+  if (result.response === 1) {
+    try {
+      const deleteNote = await noteModel.findByIdAndDelete(id)
+      updateList()
+    } catch (error) {
+      console.log(error)
+    }
+  }
+})
+
+// == Fim - CRUD Delete ============================
+// =================================================

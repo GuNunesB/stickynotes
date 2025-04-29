@@ -1,42 +1,53 @@
-/**
- * Processo de renderização do documento "nota.html"
- * Ctrl + Shift + i
+/** 
+ * Processo de renderização do documento nota.html * 
  */
 
-console.log("teste")
+//Para "debugar" e testar a aplicação é necessário ativar as ferramentas do desenvolvedor <ctrl><shift><i>
 
+// capturar o foco da caixa de texto
 const foco = document.getElementById('inputNote')
 
+// Alterar as propriedades do documento html ao iniciar a aplicação
 document.addEventListener('DOMContentLoaded', () => {
-    foco.focus()// iniciar documento com foca na caixa de texto
+    foco.focus() //iniciar o documento com foco na caixa de texto
 })
 
-// Captura de dados
-let formNote = document.getElementById('formNote')
+// Capturar os dados do formulário (Passo 1: fluxo)
+let frmNote = document.getElementById('frmNote')
 let note = document.getElementById('inputNote')
 let color = document.getElementById('selectColor')
 
-//= CRUD CREATE ===============================================//
+// =================================================
+// == CRUD Create ==================================
 
-formNote.addEventListener('submit', async (event) => {
-    // evitar comportamento padrão de recarregar a página
+// Evento relacionado ao botão submit
+frmNote.addEventListener('submit', (event) => {
+    // evitar o comportamento padrão (recarregar a página)
     event.preventDefault()
-
+    // IMPORTANTE! (teste de recebimento dos dados do form - Passo 1)
     console.log(note.value, color.value)
-
-    const stickynote = {
+    // Criar um objeto para enviar ao main os dados da nota
+    const stickyNote = {
         textNote: note.value,
         colorNote: color.value
     }
-
-    api.createNote(stickynote)
-
+    // Enviar o objeto para o main (Passo 2: fluxo)
+    api.createNote(stickyNote)
 })
 
-//= RESET FORM ================================================//
+// == Fim - CRUD Create ============================
+// =================================================
+
+
+// =================================================
+// == Resetar o formulário =========================
 
 api.resetForm((args) => {
+    // recarregar a página notas
     location.reload()
+    // recarregar a página principal(atualizar notas)
+    api.updateList()
 })
 
-//= FIM RESET FORM ============================================//
+// == Fim - Resetar o formulário ===================
+// =================================================
