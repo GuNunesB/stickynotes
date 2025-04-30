@@ -1,7 +1,3 @@
-/**
- * Modelagem de dados - tbl_notas
- */
-
 const { model, Schema } = require('mongoose')
 
 const noteSchema = new Schema({
@@ -13,5 +9,4 @@ const noteSchema = new Schema({
     }
 }, {versionKey: false})
 
-// Exportar dados ao "main.js"
 module.exports = model('Notas', noteSchema)
