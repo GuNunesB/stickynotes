@@ -1,2 +1,4 @@
+![GitHub License](https://img.shields.io/github/license/GuNunesB/stickynotes)
+
 # sticknotes
-Projeto de sistema de notas adesivas, usando framework Electron
+Projeto de sistema de notas autoadesivas, usando framework Electron
