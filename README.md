@@ -2,3 +2,6 @@
 
 # sticknotes
 Projeto de sistema de notas autoadesivas, usando framework Electron
+
+
+![](src/public/img/stickynotes_abaPrincipal.png)
